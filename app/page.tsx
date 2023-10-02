@@ -1,113 +1,284 @@
-import Image from 'next/image'
+"use client"
+import React, { useState } from 'react';
+import styled from 'styled-components';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
 
-export default function Home() {
+const FormContainer = styled.div`
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background-color: #f7f7f7;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+`;
+
+const Title = styled.h2`
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: bold;
+  font-size:30px;
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 15px;
+`;
+
+const Label = styled.label`
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+`;
+
+const Input = styled.input`
+  width: 80%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+`;
+
+const Button = styled.button`
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top:10px;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+`;
+
+const StyledLink = styled.a`
+  /* Your styling here */
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+
+  &:hover {
+    color: #0056b3;
+    text-decoration: underline;
+  }
+`;
+
+export default function Login() {
+  const router = useRouter();
+  const apiUrl = "http://localhost:5000";
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    expertise: string;
+    experienceTime: string;
+    casesWon: string;
+    casesLost: string;
+    location: string;
+    languagesKnown: string[];
+  }>({
+    name: '',
+    email: '',
+    phone: '',
+    expertise: '',
+    experienceTime: '',
+    casesWon: '',
+    casesLost: '',
+    location: '',
+    languagesKnown: [],
+  });
+
+  const [selectedAdditionalLanguage, setSelectedAdditionalLanguage] = useState('');
+
+  const handleChange = (e : any) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const handleAddLanguage = () => {
+    if (selectedAdditionalLanguage) {
+      setFormData({
+        ...formData,
+        languagesKnown: [...formData.languagesKnown, selectedAdditionalLanguage],
+      });
+      setSelectedAdditionalLanguage('');
+    }
+  };
+
+  const handleSubmit =async  (e: React.FormEvent<HTMLFormElement>) => {
+   
+    console.log("Came innnn");
+    e.preventDefault();
+    // You can access the form data in the `formData` state and perform any necessary actions (e.g., submitting to a server or updating state).
+    console.log('Form Data:', formData);
+    //TODO:push to server
+    try{
+    const response = await axios.post(`${apiUrl}/lawyers/add`,{
+      _id:formData.name+Date.now(),
+      name:formData.name,
+      contactDetails:{     email:formData.email, phone:formData.phone},
+      expertise:formData.expertise,
+      experience: {
+        time: formData.experienceTime,
+        casesWon: formData.casesWon,
+        casesLost:formData.casesLost,
+      },
+      location: formData.location,
+      languagesKnown: formData.languagesKnown,
+      rating: (Number(formData.casesWon)/Number(formData.casesLost))*10,
+    });
+    console.log("Responseee---",response);
+  }catch(err){
+    console.log("Error in adding lawyers---",err);
+  }
+    router.push("/dashboard");
+  };
+
+  const allLanguages = [
+    { code: 'en', name: 'English' },
+    { code: 'es', name: 'Spanish' },
+    { code: 'hi', name: 'Hindi' },
+    { code: 'bn', name: 'Bengali' },
+    // Add more languages here
+  ];
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <FormContainer>
+      <Title>Lawyer Details Form</Title>
+      <form onSubmit={handleSubmit}  suppressHydrationWarning={true} method='post'>
+        <FormGroup>
+          <Label>Name:</Label>
+          <Input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <Label>Email:</Label>
+          <Input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <Label>Phone:</Label>
+          <Input
+            type="text"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            maxLength={10}
+            minLength={10}
+            required
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <Label>Expertise:</Label>
+          <Input
+            type="text"
+            name="expertise"
+            value={formData.expertise}
+            onChange={handleChange}
+            required
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <Label>Experience (Years):</Label>
+          <Input
+            type="number"
+            name="experienceTime"
+            value={formData.experienceTime}
+            onChange={handleChange}
+            required
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <Label>Cases Won:</Label>
+          <Input
+            type="number"
+            name="casesWon"
+            value={formData.casesWon}
+            onChange={handleChange}
+            required
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <Label>Cases Lost:</Label>
+          <Input
+            type="number"
+            name="casesLost"
+            value={formData.casesLost}
+            onChange={handleChange}
+            required
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <Label>Location:</Label>
+          <Input
+            type="text"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+            required
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <Label>Languages Known:</Label>
+          <Select
+            value={selectedAdditionalLanguage}
+            onChange={(e) => setSelectedAdditionalLanguage(e.target.value)}
+            required={formData.languagesKnown.length === 0}
           >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+            <option value="" disabled>
+              Select Language
+            </option>
+            {allLanguages.map((lang) => (
+              <option key={lang.code} value={lang.name}>
+                {lang.name}
+              </option>
+            ))}
+          </Select>
+        </FormGroup>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+        <Button type="button" onClick={handleAddLanguage}>
+          Add Language
+        </Button>
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+        {formData.languagesKnown.map((lang, index) => (
+          <Label key={index}>Language {index + 1}: {lang}</Label>
+        ))}
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+        <FormGroup>
+        <Button type="submit">Submit</Button>
+        </FormGroup>
+      </form>
+    </FormContainer>
+  );
 }
